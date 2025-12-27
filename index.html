@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch the Ball</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { text-align: center; font-family: sans-serif; background: #1a1a1a; color: white; overflow: hidden; }
+        #game-container { position: relative; width: 100vw; height: 80vh; background: #222; border-radius: 20px; margin-top: 10px; }
+        #ball {
+            position: absolute; width: 50px; height: 50px;
+            background: #0088cc; border-radius: 50%; cursor: pointer;
+            transition: 0.1s; display: flex; align-items: center; justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <h2>Счет: <span id="score">0</span></h2>
+    <div id="game-container">
+        <div id="ball">🎯</div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand(); // Развернуть на весь экран
+
+        let score = 0;
+        const ball = document.getElementById('ball');
+        const scoreDisplay = document.getElementById('score');
+
+        function moveBall() {
+            const x = Math.random() * (window.innerWidth - 50);
+            const y = Math.random() * (window.innerHeight * 0.7);
+            ball.style.left = x + 'px';
+            ball.style.top = y + 'px';
+        }
+
+        ball.onclick = () => {
+            score++;
+            scoreDisplay.innerText = score;
+            moveBall();
+            tg.HapticFeedback.impactOccurred('medium'); // Вибрация при клике!
+        };
+
+        moveBall();
+    </script>
+</body>
+</html>
