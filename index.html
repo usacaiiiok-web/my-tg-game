@@ -6,29 +6,32 @@
     <title>Mini Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { text-align: center; font-family: sans-serif; background: #1a1a1a; color: white; margin: 0; }
+        body { text-align: center; font-family: sans-serif; background: #1a1a1a; color: white; margin: 0; overflow: hidden; }
+        #game-area { height: 70vh; position: relative; background: #222; overflow: hidden; }
         #ball { 
             position: absolute; width: 60px; height: 60px; 
             background: radial-gradient(circle, #00d2ff, #3a7bd5); 
             border-radius: 50%; cursor: pointer; display: flex; 
             align-items: center; justify-content: center; font-size: 24px;
+            user-select: none;
         }
         .btn {
             margin-top: 20px; padding: 15px 30px; background: #28a745; 
             color: white; border: none; border-radius: 10px; font-weight: bold;
+            font-size: 18px; cursor: pointer;
         }
     </style>
 </head>
 <body>
     <h2>Счет: <span id="score">0</span></h2>
-    <div id="game-area" style="height: 60vh; position: relative; background: #222;">
+    <div id="game-area">
         <div id="ball">🎯</div>
     </div>
     <button class="btn" id="send-data">СОХРАНИТЬ В БОТЕ</button>
 
     <script>
         let tg = window.Telegram.WebApp;
-        tg.expand();
+        tg.expand(); // Развернуть на всё окно
 
         let score = 0;
         const ball = document.getElementById('ball');
@@ -36,7 +39,7 @@
 
         function moveBall() {
             const x = Math.random() * (window.innerWidth - 60);
-            const y = Math.random() * (window.innerHeight * 0.5);
+            const y = Math.random() * (document.getElementById('game-area').offsetHeight - 60);
             ball.style.left = x + 'px';
             ball.style.top = y + 'px';
         }
@@ -45,13 +48,16 @@
             score++;
             scoreDisplay.innerText = score;
             moveBall();
-            tg.HapticFeedback.impactOccurred('light');
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
         };
 
-        // ОТПРАВКА ДАННЫХ БОТУ
+        // ГЛАВНАЯ ЧАСТЬ: Отправка данных
         document.getElementById('send-data').onclick = () => {
-            let data = { score: score };
-            tg.sendData(JSON.stringify(data)); // Отправляем данные в виде строки
+            console.log("Отправка данных...");
+            let dataToSend = JSON.stringify({ score: score });
+            tg.sendData(dataToSend); // Эта команда закрывает окно и шлет данные
         };
 
         moveBall();
