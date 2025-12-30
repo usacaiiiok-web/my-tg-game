@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=none">
+    <title>Space Shooter</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { margin: 0; background: #000; color: white; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+        canvas { display: block; background: #000; }
+        #ui { position: absolute; top: 10px; left: 10px; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div id="ui">Score: <span id="score">0</span></div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let score = 0;
+        let gameOver = false;
+
+        const player = { x: canvas.width/2 - 15, y: canvas.height - 80, w: 30, h: 30, speed: 7 };
+        const bullets = [];
+        const enemies = [];
+
+        // Создаем врагов как в Galaxian
+        function spawnEnemies() {
+            for(let i=0; i<5; i++) {
+                for(let j=0; j<8; j++) {
+                    enemies.push({ x: 40 + j*40, y: 50 + i*40, w: 25, h: 20, alive: true });
+                }
+            }
+        }
+        spawnEnemies();
+
+        // Управление (движение за пальцем)
+        canvas.addEventListener('touchmove', (e) => {
+            player.x = e.touches[0].clientX - player.w/2;
+        });
+
+        // Стрельба (автоматическая)
+        setInterval(() => { if(!gameOver) bullets.push({ x: player.x + player.w/2 - 2, y: player.y, w: 4, h: 10 }); }, 300);
+
+        function update() {
+            if(gameOver) return;
+
+            // Движение пуль
+            bullets.forEach((b, i) => {
+                b.y -= 10;
+                if(b.y < 0) bullets.splice(i, 1);
+            });
+
+            // Движение врагов (простое)
+            enemies.forEach(en => {
+                if(en.alive) {
+                    en.x += Math.sin(Date.now()/1000) * 2; // Колыхание
+                }
+            });
+
+            // Коллизии (попадания)
+            bullets.forEach((b, bi) => {
+                enemies.forEach((en, ei) => {
+                    if(en.alive && b.x < en.x + en.w && b.x + b.w > en.x && b.y < en.y + en.h && b.y + b.h > en.y) {
+                        en.alive = false;
+                        bullets.splice(bi, 1);
+                        score += 10;
+                        document.getElementById('score').innerText = score;
+                        if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                    }
+                });
+            });
+
+            // Проверка на победу/проигрыш
+            if(enemies.every(en => !en.alive)) {
+                gameOver = true;
+                setTimeout(() => {
+                    tg.sendData(JSON.stringify({ score: score, game: "Galaxian" }));
+                }, 1000);
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Рисуем игрока (корабль)
+            ctx.fillStyle = '#00f';
+            ctx.fillRect(player.x, player.y, player.w, player.h);
+
+            // Пули
+            ctx.fillStyle = '#ff0';
+            bullets.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
+
+            // Враги
+            ctx.fillStyle = '#f00';
+            enemies.forEach(en => {
+                if(en.alive) ctx.fillRect(en.x, en.y, en.w, en.h);
+            });
+
+            update();
+            requestAnimationFrame(draw);
+        }
+        draw();
+    </script>
+</body>
+</html>
